@@ -22,10 +22,19 @@ const form = ref({ email: '', password: '', nickname: '', accept: false })
 async function openAccount() {
   showAccount.value = true
   message.value = ''
-  if (auth.token) {
-    if (!products.value.length) products.value = await interviewApi.products(auth.token)
-    ledger.value = await interviewApi.entitlementLedger(auth.token)
-    dataRequests.value = await interviewApi.dataRequests(auth.token)
+  try {
+    if (auth.token) {
+      const [nextProducts, nextLedger, nextRequests] = await Promise.all([
+        products.value.length ? Promise.resolve(products.value) : interviewApi.products(auth.token),
+        interviewApi.entitlementLedger(auth.token),
+        interviewApi.dataRequests(auth.token),
+      ])
+      products.value = nextProducts
+      ledger.value = nextLedger
+      dataRequests.value = nextRequests
+    }
+  } catch (exception) {
+    message.value = exception instanceof ApiError ? exception.message : '账户数据加载失败，请重试'
   }
 }
 
@@ -58,9 +67,13 @@ async function buy(product: Product) {
 
 async function requestExport() {
   if (!auth.token) return
-  const request = await interviewApi.createDataRequest(auth.token, 'EXPORT')
-  message.value = `数据导出申请已受理，状态：${request.status}`
-  dataRequests.value = await interviewApi.dataRequests(auth.token)
+  try {
+    const request = await interviewApi.createDataRequest(auth.token, 'EXPORT')
+    message.value = `数据导出申请已受理，状态：${request.status}`
+    dataRequests.value = await interviewApi.dataRequests(auth.token)
+  } catch (exception) {
+    message.value = exception instanceof ApiError ? exception.message : '数据导出申请失败'
+  }
 }
 
 async function requestDelete() {
@@ -92,6 +105,10 @@ async function downloadExport(request: DataRequest) {
 
 <template>
   <div class="shell">
+    <div v-if="auth.initializationError" class="connection-banner">
+      <span><b>服务连接失败</b> {{ auth.initializationError }}。请确认一键启动窗口仍在运行。</span>
+      <button @click="auth.initialize">重新连接</button>
+    </div>
     <header class="topbar">
       <RouterLink class="brand" to="/"><span class="brand-mark">AI</span><div><strong>面试训练营</strong><small>刷题 · 模考 · AI 实战</small></div></RouterLink>
       <nav class="main-nav">
@@ -103,6 +120,7 @@ async function downloadExport(request: DataRequest) {
       <button class="account account-trigger" v-if="auth.user" @click="openAccount">
         <span>{{ auth.user.email || auth.user.nickname }}</span><b>AI 实战 {{ auth.user.availableCredits }} 次</b>
       </button>
+      <span v-else class="account-loading">{{ auth.loading ? '正在连接真实数据…' : '服务未连接' }}</span>
     </header>
     <RouterView />
 

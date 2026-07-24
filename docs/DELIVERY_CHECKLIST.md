@@ -2,8 +2,8 @@
 
 ## 交付物
 
-- `backend/`：可构建 API 源码、7 个只向前 Flyway 迁移、6 个自动化测试。
-- `frontend/`：可构建 Web 源码、3 个有效单测、Nginx 生产配置。
+- `backend/`：可构建 API 源码、8 个只向前 Flyway 迁移、6 个自动化测试。
+- `frontend/`：可构建 Web 源码、3 个单元测试、4 个真实浏览器端到端流程、Nginx 生产配置。
 - `compose.yaml`、`.env.example`：MySQL + Redis + API + Web 验收环境。
 - `deploy/`：原生主机启停、发布、Nginx、数据库备份脚本。
 - `docs/`：需求完成矩阵、验收边界、运行/备份/回滚手册。

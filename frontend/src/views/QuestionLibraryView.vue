@@ -45,20 +45,33 @@ watch(
 
 async function start() {
   if (!auth.token || !questions.value.length) return
-  const mode = collection.value === 'WRONG' ? 'WRONG' : collection.value === 'FAVORITE' ? 'FAVORITE'
-    : category.value ? 'CATEGORY' : 'SEQUENTIAL'
-  const session = await practiceApi.createSession(auth.token, {
-    mode, categoryCode: category.value || undefined, questionCount: Math.min(20, questions.value.length),
-  })
-  await router.push(`/practice/${session.id}`)
+  loading.value = true
+  error.value = ''
+  try {
+    const mode = collection.value === 'WRONG' ? 'WRONG' : collection.value === 'FAVORITE' ? 'FAVORITE'
+      : category.value ? 'CATEGORY' : 'SEQUENTIAL'
+    const session = await practiceApi.createSession(auth.token, {
+      mode, categoryCode: category.value || undefined, questionCount: Math.min(20, questions.value.length),
+    })
+    await router.push(`/practice/${session.id}`)
+  } catch (exception) {
+    error.value = exception instanceof ApiError ? exception.message : '练习创建失败，请重试'
+  } finally {
+    loading.value = false
+  }
 }
 
 async function toggle(question: PracticeQuestion) {
   if (!auth.token) return
-  const result = await practiceApi.favorite(auth.token, question.id)
-  question.favorite = result.favorite
-  if (collection.value === 'FAVORITE' && !result.favorite) {
-    questions.value = questions.value.filter((value) => value.id !== question.id)
+  error.value = ''
+  try {
+    const result = await practiceApi.favorite(auth.token, question.id)
+    question.favorite = result.favorite
+    if (collection.value === 'FAVORITE' && !result.favorite) {
+      questions.value = questions.value.filter((value) => value.id !== question.id)
+    }
+  } catch (exception) {
+    error.value = exception instanceof ApiError ? exception.message : '收藏更新失败，请重试'
   }
 }
 </script>

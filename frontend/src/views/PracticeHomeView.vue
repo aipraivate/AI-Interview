@@ -35,7 +35,7 @@ watch(
 )
 
 async function start(mode: string, questionCount: number, categoryCode?: string) {
-  if (!auth.token || loading.value) return
+  if (!auth.token || loading.value || !modeAvailable(mode)) return
   loading.value = true
   error.value = ''
   try {
@@ -46,6 +46,13 @@ async function start(mode: string, questionCount: number, categoryCode?: string)
   } finally {
     loading.value = false
   }
+}
+
+function modeAvailable(mode: string) {
+  if (!dashboard.value) return false
+  if (mode === 'WRONG') return dashboard.value.wrongQuestions > 0
+  if (mode === 'FAVORITE') return dashboard.value.favoriteQuestions > 0
+  return dashboard.value.totalQuestions > 0
 }
 
 function categoryProgress(done: number, total: number) {
@@ -91,8 +98,8 @@ const modeName = (mode: string) => ({
         <RouterLink to="/library">查看题库 →</RouterLink>
       </div>
       <div class="mode-grid">
-        <button v-for="item in modes" :key="item.mode" class="mode-card" :class="item.tone" :disabled="loading" @click="start(item.mode, item.count)">
-          <i>{{ item.icon }}</i><span><b>{{ item.title }}</b><small>{{ item.note }}</small></span><em>开始</em>
+        <button v-for="item in modes" :key="item.mode" class="mode-card" :class="item.tone" :disabled="loading || !modeAvailable(item.mode)" @click="start(item.mode, item.count)">
+          <i>{{ item.icon }}</i><span><b>{{ item.title }}</b><small>{{ item.mode === 'WRONG' && !modeAvailable(item.mode) ? '暂无错题，完成练习后自动归集' : item.note }}</small></span><em>{{ modeAvailable(item.mode) ? '开始' : '暂无数据' }}</em>
         </button>
       </div>
     </section>

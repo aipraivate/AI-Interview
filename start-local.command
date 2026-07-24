@@ -132,7 +132,9 @@ trap stop_services EXIT INT TERM
 say "正在启动后端…"
 (
   cd "$project_dir/backend"
-  exec java -jar target/interview-api-0.0.1-SNAPSHOT.jar --server.port="$api_port"
+  exec java -jar target/interview-api-0.0.1-SNAPSHOT.jar \
+    --server.port="$api_port" \
+    --app.cors.allowed-origins="http://localhost:$web_port,http://127.0.0.1:$web_port"
 ) >>"$api_log" 2>&1 &
 api_pid=$!
 wait_for_url "http://localhost:$api_port/actuator/health" 90 '后端' "$api_pid"

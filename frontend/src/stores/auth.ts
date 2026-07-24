@@ -10,6 +10,8 @@ export const useAuthStore = defineStore('auth', {
     refreshToken: localStorage.getItem(REFRESH_KEY) ?? '',
     user: null as User | null,
     loading: false,
+    initialized: false,
+    initializationError: '',
   }),
   actions: {
     saveSession(session: GuestLogin) {
@@ -29,6 +31,7 @@ export const useAuthStore = defineStore('auth', {
     async initialize() {
       if (this.loading || this.user) return
       this.loading = true
+      this.initializationError = ''
       try {
         if (this.token) {
           try {
@@ -44,7 +47,14 @@ export const useAuthStore = defineStore('auth', {
           }
         }
         this.saveSession(await interviewApi.guest())
-      } finally { this.loading = false }
+      } catch (exception) {
+        this.initializationError = exception instanceof Error
+          ? exception.message
+          : '无法连接后端服务'
+      } finally {
+        this.loading = false
+        this.initialized = true
+      }
     },
     async register(payload: { email: string; password: string; nickname: string; acceptTerms: boolean; acceptPrivacy: boolean }) {
       this.saveSession(await interviewApi.register(payload, this.token))

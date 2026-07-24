@@ -106,21 +106,55 @@ async function nextQuestion() {
 
 async function toggleFavorite() {
   if (!auth.token || !question.value) return
-  const response = await practiceApi.favorite(auth.token, question.value.id)
-  question.value.favorite = response.favorite
+  error.value = ''
+  try {
+    const response = await practiceApi.favorite(auth.token, question.value.id)
+    question.value.favorite = response.favorite
+  } catch (exception) {
+    error.value = exception instanceof ApiError ? exception.message : '收藏更新失败，请重试'
+  }
 }
 
 async function shareResult() {
   if (!auth.token || !session.value) return
-  const share = await practiceApi.createShare(auth.token, session.value.id)
-  const url = `${window.location.origin}${share.path}`
-  if (navigator.share) {
-    await navigator.share({ title: '我的面试训练成绩', text: `本次训练 ${session.value.score} 分`, url })
-    shareMessage.value = '已打开系统分享'
-  } else {
-    await navigator.clipboard.writeText(url)
-    shareMessage.value = '分享链接已复制'
+  error.value = ''
+  shareMessage.value = ''
+  try {
+    const share = await practiceApi.createShare(auth.token, session.value.id)
+    const url = `${window.location.origin}${share.path}`
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: '我的面试训练成绩', text: `本次训练 ${session.value.score} 分`, url })
+        shareMessage.value = '系统分享已完成'
+        return
+      } catch (exception) {
+        if (exception instanceof DOMException && exception.name === 'AbortError') {
+          shareMessage.value = '已取消系统分享，成绩链接仍已生成'
+          return
+        }
+      }
+    }
+    await copyText(url)
+    shareMessage.value = `分享链接已复制：${url}`
+  } catch (exception) {
+    error.value = exception instanceof ApiError ? exception.message : '分享失败，请重试'
   }
+}
+
+async function copyText(value: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value)
+    return
+  }
+  const input = document.createElement('textarea')
+  input.value = value
+  input.style.position = 'fixed'
+  input.style.opacity = '0'
+  document.body.appendChild(input)
+  input.select()
+  const copied = document.execCommand('copy')
+  input.remove()
+  if (!copied) throw new Error('Clipboard is unavailable')
 }
 </script>
 

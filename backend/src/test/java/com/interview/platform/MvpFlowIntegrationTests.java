@@ -194,7 +194,7 @@ class MvpFlowIntegrationTests {
         AuthService.GuestLogin login = authService.loginAsGuest("刷题用户");
         String userId = login.user().id();
         PracticeService.DashboardView initial = practiceService.dashboard(userId);
-        assertThat(initial.totalQuestions()).isEqualTo(18);
+        assertThat(initial.totalQuestions()).isEqualTo(60);
         assertThat(initial.categories()).hasSize(6);
 
         PracticeService.SessionView wrongSession = practiceService.createSession(userId,

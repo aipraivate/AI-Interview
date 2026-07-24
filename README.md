@@ -36,13 +36,13 @@ npm install
 npm run dev
 ```
 
-访问 `http://localhost:5173`。系统会创建匿名体验账号，题库训练免费可用，并发放 3 次 AI 文字面试权益。题库首批内置 6 个分类、18 道审核样题，覆盖单选、多选、判断、场景和简答五种题型；数据模型和 API 可继续批量扩充正式题库。
+访问 `http://localhost:5173`。系统会创建匿名体验账号，题库训练免费可用，并发放 3 次 AI 文字面试权益。题库内置 6 个分类、60 道带答案和解析的版本化题目，覆盖单选、多选、判断、场景和简答五种题型；答题、收藏、错题、训练记录和分享均写入数据库，不是浏览器静态假数据。
 
 ## 完整质量门禁
 
 ```bash
 cd backend && ./mvnw test
-cd ../frontend && npm run build && npm run test:unit -- --run && npm run lint
+cd ../frontend && npm run build && npm run test:unit -- --run && npm run lint && npm run test:e2e
 ```
 
 要求 Java 21、Node 22.18+。如果本机只有 Java 17，可以暂用 `./mvnw -Djava.version=17 test` 做兼容验证，生产仍须使用 Java 21。
