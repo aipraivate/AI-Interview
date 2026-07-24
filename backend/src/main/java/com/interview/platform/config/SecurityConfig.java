@@ -32,6 +32,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/guest", "/api/v1/auth/register",
                                 "/api/v1/auth/login", "/api/v1/auth/refresh",
                                 "/api/v1/auth/logout", "/api/v1/payments/webhooks/sandbox",
+                                "/api/v1/shares/**",
                                 "/actuator/health/**", "/error").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(bearerTokenFilter, UsernamePasswordAuthenticationFilter.class)

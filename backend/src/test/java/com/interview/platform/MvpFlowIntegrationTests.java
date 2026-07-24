@@ -7,6 +7,7 @@ import com.interview.platform.resume.ResumeService;
 import com.interview.platform.order.OrderService;
 import com.interview.platform.order.PaymentWebhookService;
 import com.interview.platform.privacy.PrivacyService;
+import com.interview.platform.practice.PracticeService;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.mock.web.MockMultipartFile;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,8 @@ class MvpFlowIntegrationTests {
     private PrivacyService privacyService;
     @Autowired
     private PaymentWebhookService paymentWebhookService;
+    @Autowired
+    private PracticeService practiceService;
 
     @Test
     void guestCanCompleteInterviewAndReceiveReport() throws InterruptedException {
@@ -184,6 +187,50 @@ class MvpFlowIntegrationTests {
                 .filter(value -> value.id().equals(deletion.id())).findFirst().orElseThrow().status())
                 .isEqualTo("COMPLETED");
         assertThat(authService.authenticate(login.accessToken())).isNull();
+    }
+
+    @Test
+    void userCanPracticeReviewWrongQuestionsFavoriteAndShare() {
+        AuthService.GuestLogin login = authService.loginAsGuest("刷题用户");
+        String userId = login.user().id();
+        PracticeService.DashboardView initial = practiceService.dashboard(userId);
+        assertThat(initial.totalQuestions()).isEqualTo(18);
+        assertThat(initial.categories()).hasSize(6);
+
+        PracticeService.SessionView wrongSession = practiceService.createSession(userId,
+                new PracticeService.CreateSessionCommand("SEQUENTIAL", "GENERAL", 1));
+        assertThat(wrongSession.currentQuestion().type()).isEqualTo("SINGLE");
+        PracticeService.AnswerResult wrong = practiceService.answer(wrongSession.id(), userId,
+                new PracticeService.AnswerCommand(wrongSession.currentQuestion().id(),
+                        java.util.List.of("只介绍兴趣爱好"), 8));
+        assertThat(wrong.correct()).isFalse();
+        assertThat(wrong.explanation()).isNotBlank();
+        assertThat(practiceService.dashboard(userId).wrongQuestions()).isEqualTo(1);
+
+        assertThat(practiceService.toggleFavorite(wrongSession.currentQuestion().id(), userId).favorite()).isTrue();
+        assertThat(practiceService.library(userId, null, null, "FAVORITE")).hasSize(1);
+
+        PracticeService.SessionView retry = practiceService.createSession(userId,
+                new PracticeService.CreateSessionCommand("WRONG", null, 1));
+        PracticeService.AnswerResult corrected = practiceService.answer(retry.id(), userId,
+                new PracticeService.AnswerCommand(retry.currentQuestion().id(), java.util.List.of(
+                        "岗位匹配结论—相关经历—量化成果—求职动机"), 6));
+        assertThat(corrected.correct()).isTrue();
+        assertThat(practiceService.dashboard(userId).wrongQuestions()).isZero();
+        PracticeService.ShareCreated share = practiceService.createShare(retry.id(), userId);
+        assertThat(practiceService.getShare(share.token()).score()).isEqualTo(100);
+
+        PracticeService.SessionView mock = practiceService.createSession(userId,
+                new PracticeService.CreateSessionCommand("MOCK", "GENERAL", 1));
+        PracticeService.AnswerResult hidden = practiceService.answer(mock.id(), userId,
+                new PracticeService.AnswerCommand(mock.currentQuestion().id(), java.util.List.of(
+                        "岗位匹配结论—相关经历—量化成果—求职动机"), 5));
+        assertThat(hidden.correct()).isNull();
+        assertThat(hidden.explanation()).isNull();
+        assertThat(practiceService.review(mock.id(), userId)).singleElement().satisfies(item -> {
+            assertThat(item.correctAnswer()).isNotEmpty();
+            assertThat(item.explanation()).isNotBlank();
+        });
     }
 
     private String paymentSignature(String value) throws Exception {

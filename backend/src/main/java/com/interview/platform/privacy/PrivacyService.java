@@ -83,6 +83,10 @@ public class PrivacyService {
         data.put("reports", jdbc.queryForList("SELECT session_id,status,total_score,summary,strengths,improvements,details_json,generated_at FROM interview_reports WHERE user_id=?", userId));
         data.put("orders", jdbc.queryForList("SELECT id,product_name,credits,amount_cents,currency,status,created_at,paid_at FROM purchase_orders WHERE user_id=?", userId));
         data.put("entitlementLedger", jdbc.queryForList("SELECT operation,amount,reference_id,created_at FROM entitlement_ledger WHERE user_id=? ORDER BY created_at", userId));
+        data.put("practiceSessions", jdbc.queryForList("SELECT id,mode,category_code,status,total_count,answered_count,correct_count,created_at,completed_at FROM practice_sessions WHERE user_id=?", userId));
+        data.put("practiceAnswers", jdbc.queryForList("SELECT session_id,question_id,selected_answer_json,correct,duration_seconds,answered_at FROM practice_answers WHERE user_id=?", userId));
+        data.put("questionProgress", jdbc.queryForList("SELECT question_id,attempts,correct_count,wrong_count,last_correct,last_answer_json,answered_at FROM user_question_progress WHERE user_id=?", userId));
+        data.put("questionFavorites", jdbc.queryForList("SELECT question_id,created_at FROM question_favorites WHERE user_id=?", userId));
         try {
             request.complete("数据副本已生成，7天内可下载", objectMapper.writeValueAsString(data),
                     Instant.now().plus(7, java.time.temporal.ChronoUnit.DAYS));
@@ -98,6 +102,9 @@ public class PrivacyService {
         jdbc.update("UPDATE interview_sessions SET jd_snapshot='[用户已删除]',resume_snapshot='[用户已删除]',question_plan='[]' WHERE user_id=?", userId);
         jdbc.update("UPDATE resume_versions SET content='[用户已删除]',title='已删除',target_role='已删除' WHERE user_id=?", userId);
         jdbc.update("UPDATE resumes SET content='[用户已删除]',title='已删除',target_role='已删除',original_filename=NULL WHERE user_id=?", userId);
+        jdbc.update("UPDATE practice_answers SET selected_answer_json='[\"用户已删除\"]' WHERE user_id=?", userId);
+        jdbc.update("UPDATE user_question_progress SET last_answer_json='[\"用户已删除\"]' WHERE user_id=?", userId);
+        jdbc.update("DELETE FROM practice_shares WHERE user_id=?", userId);
         auth.anonymize(userId);
         request.complete("账号已注销，业务内容已去标识化；备份将在到期周期内清除", null, null);
     }

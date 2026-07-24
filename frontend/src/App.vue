@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { RouterView } from 'vue-router'
+import { ref, watch } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
 import { interviewApi, type DataRequest, type LedgerEntry, type Product } from '@/api/interview'
 import { ApiError } from '@/api/client'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
-auth.initialize()
+const route = useRoute()
+watch(() => route.path, (path) => {
+  if (!path.startsWith('/share/')) void auth.initialize()
+}, { immediate: true })
 const showAccount = ref(false)
 const accountMode = ref<'login' | 'register'>('register')
 const loading = ref(false)
@@ -90,12 +93,25 @@ async function downloadExport(request: DataRequest) {
 <template>
   <div class="shell">
     <header class="topbar">
-      <div class="brand"><span class="brand-mark">AI</span><div><strong>面试练习室</strong><small>证据式反馈 · 可重复训练</small></div></div>
+      <RouterLink class="brand" to="/"><span class="brand-mark">AI</span><div><strong>面试训练营</strong><small>刷题 · 模考 · AI 实战</small></div></RouterLink>
+      <nav class="main-nav">
+        <RouterLink to="/">训练首页</RouterLink>
+        <RouterLink to="/library">分类题库</RouterLink>
+        <RouterLink to="/library?collection=WRONG">错题本</RouterLink>
+        <RouterLink to="/ai-interview">AI 实战</RouterLink>
+      </nav>
       <button class="account account-trigger" v-if="auth.user" @click="openAccount">
-        <span>{{ auth.user.email || auth.user.nickname }}</span><b>{{ auth.user.availableCredits }} 次可用</b>
+        <span>{{ auth.user.email || auth.user.nickname }}</span><b>AI 实战 {{ auth.user.availableCredits }} 次</b>
       </button>
     </header>
     <RouterView />
+
+    <nav class="mobile-nav">
+      <RouterLink to="/"><i>⌂</i><span>训练</span></RouterLink>
+      <RouterLink to="/library"><i>▤</i><span>题库</span></RouterLink>
+      <RouterLink to="/library?collection=WRONG"><i>↻</i><span>错题</span></RouterLink>
+      <RouterLink to="/ai-interview"><i>✦</i><span>AI 实战</span></RouterLink>
+    </nav>
 
     <div class="drawer-mask" v-if="showAccount" @click.self="showAccount = false">
       <aside class="account-drawer">
