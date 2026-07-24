@@ -1,0 +1,19 @@
+:root {
+  --ink: #17233d;
+  --muted: #67728a;
+  --line: #dfe5ef;
+  --paper: #ffffff;
+  --wash: #f3f6fb;
+  --brand: #2458e6;
+  --brand-dark: #173ca7;
+  --mint: #2cc39a;
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--wash);
+  font-synthesis: none;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+

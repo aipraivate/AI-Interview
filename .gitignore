@@ -1,0 +1,10 @@
+.DS_Store
+.env
+*.log
+data/
+runtime/
+backend/target/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.eslintcache
