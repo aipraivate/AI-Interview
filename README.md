@@ -13,7 +13,15 @@
 
 ## 本地运行
 
-后端默认使用 H2 文件库和确定性本地 AI，不需要外部密钥：
+macOS 可直接双击项目根目录的 `start-local.command`，或者在终端执行：
+
+```bash
+./start-local.command
+```
+
+脚本会自动安装依赖、构建、启动服务并打开浏览器；默认使用 8080/5173，端口被占用时会自动选择备用端口。保持脚本窗口运行；按 `Control+C` 会同时停止前后端。运行日志位于 `runtime/local-api.log` 和 `runtime/local-web.log`。
+
+也可以分别手工启动。后端默认使用 H2 文件库和确定性本地 AI，不需要外部密钥：
 
 ```bash
 cd backend
